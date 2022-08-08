@@ -10,26 +10,36 @@ export const Protected = () => {
 	const [data, setData] = useState(" ");
 
 	const protectedData = async () => {
-		// retrieve token form localStorage
-        
-		const token = localStorage.getItem("jwt-token");
-		const response = await fetch(process.env.BACKEND_URL + "/api/protected", {
-			method: "GET",
-			headers: {
-				"Content-Type": "application/json",
-				Authorization: "Bearer " + token
-			}
-		});
-		if (!response.ok) throw Error("There was a problem in the login request");
-       
-		const responseJson = await response.json();
-		setData(responseJson);
-	};
+        // retrieve token form localStorage
+
+        const token = JSON.parse(localStorage.getItem("jwt-token"));
+        const response = await fetch(process.env.BACKEND_URL + "/api/protected", {
+            method: "GET",
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": "Bearer " + token.token
+            }
+        }).then(response => {
+            if (!response.msg == "ok") throw Error("There was a problem in the login request");
+
+            const responseJson = response.json();
+            setData(responseJson)
+        }).catch(error => {
+            localStorage.removeItem('jwt-token');
+            localStorage.removeItem('user_id');
+            window.location.href = '/login';
+            console.log(error)
+
+        });
+
+    };
 
 	useEffect(() => {
-		if (store.user_token === null) history.push("/notlogin");
-		else protectedData();
-	}, []);
+        let prueba = localStorage.getItem("jwt-token")
+        if (prueba === null) history.push("/notlogin");
+        else protectedData();
+    }, []);
+
     
 	return (
         

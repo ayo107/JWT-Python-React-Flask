@@ -5,6 +5,16 @@ from flask_jwt_extended import JWTManager, create_access_token,jwt_required, get
 """
 This module takes care of starting the API Server, Loading the DB and Adding the endpoints
 """
+from datetime import timedelta
+delta = timedelta(
+    days=50,
+    seconds=27,
+    microseconds=10,
+    milliseconds=29000,
+    minutes=5,
+    hours=8,
+    weeks=2
+)
 
 
 api = Blueprint('api', __name__)
@@ -57,20 +67,22 @@ def get_users():
 def create_token():
     email = request.json.get("email", None)
     password = request.json.get("password", None)
-   
+    # Query your database for email and password
     user = User.query.filter_by(email=email, password=password).first()
     if user is None:
-      
-        return jsonify({"msg": "Bad username or password"}), 401
     
-    access_token = create_access_token(identity = user.id)
+        data = {
+        "id": user.id,
+        'email': user.email
+    }     
+    access_token = create_access_token(identity=user.id, expires_delta=timedelta(minutes=120))
     return jsonify({ "token": access_token, "user_id": user.id })
 
 @api.route("/protected", methods=["GET"])
-@jwt_required()
+@jwt_required(optional=True)
 def protected():
-    
+    # Access the identity of the current user with get_jwt_identity
     current_user_id = get_jwt_identity()
     user = User.query.get(current_user_id)
-    
-    return jsonify({"id": user.id, "email": user.email }), 200
+  
+    return jsonify({"id": user.id, "email": user.email , "msg": "ok"}), 200
